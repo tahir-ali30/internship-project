@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.navLinks {
+    margin-inline: 1rem;
+    transition: all 50ms ease;
+    transition-origin: left;
+    border-bottom: 0 solid black;
+}
+
+.navLinks:hover{
+    padding-bottom: 8px;
+    border-bottom-width: 2px;
+}
+
+.navLinks.active {
+    border-bottom: 2px solid black;
+    padding-bottom: 8px;
+}
+
+img {
+    max-width: 100%;
+    display: block;
+}
+
+.card:hover::before {
+    content: '';
+    background-color: rgb(0 0 0 / .75);
+    position: absolute;
+    inset: 0;
+}
+
+.steps {
+    @apply rounded-full flex justify-center size-16 items-center p-6 font-bold text-[#1E3769];
+}
+.steps.active {
+    @apply bg-[#1E3769] text-white;
+}
+
+.formInput{
+    @apply border-2 w-full p-2 rounded-lg my-2;
+}
+
+.formInputsContainer {
+    @apply flex gap-2;
+}
+
+.seller-nav-links {
+    @apply p-3 pr-16 rounded-md max-w-full flex items-center gap-2 justify-start;
+}
+.seller-nav-links.active {
+    @apply bg-[#1E3769] text-white;
+}
