@@ -27,7 +27,7 @@ const PersonalInfoSchema = z.object({
 
 const BankInfoSchema = z.object({
   bank_id: z.string().min(1, 'Bank is required'),
-  iban: z.string().min(1, 'Account Number is required'),
+  iban: z.string().min(24, 'Account Number must be at least 24 characters'),
   title: z.string().min(1, 'Account Title is required'),
 });
 
@@ -94,7 +94,9 @@ export default function SellerForm() {
   }, [countryId])
 
   useEffect(() => {
-    postData(getCityRoute, { state_id: stateId }).then(data => setCities(data.city));
+    if (stateId) {
+      postData(getCityRoute, { state_id: stateId }).then(data => setCities(data.city));
+    }
   }, [stateId])
 
   function nextStep(data) {
@@ -181,7 +183,7 @@ export default function SellerForm() {
                 <select
                   {...register('state_id')}
                   className='w-full p-2 my-3 disabled:cursor-not-allowed' name="state_id" id="state_id"
-                  disabled={states.length === 0}
+                  disabled={states?.length === 0}
                 >
                   <option value={''}>Select Option</option>
                   {states?.length > 0 && states.map(state =>
@@ -197,7 +199,7 @@ export default function SellerForm() {
                 <select
                   {...register('city_id')}
                   className='w-full p-2 my-3 disabled:cursor-not-allowed' name="city_id" id="city_id"
-                  disabled={(cities.length === 0)}
+                  disabled={(cities?.length === 0)}
                 >
 
                   <option value={''}>Select Option</option>

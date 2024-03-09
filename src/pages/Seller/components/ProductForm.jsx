@@ -5,17 +5,18 @@ import { useForm, Controller } from 'react-hook-form';
 import ReactQuill from 'react-quill';
 import { z } from 'zod'
 import 'react-quill/dist/quill.snow.css';
-import { getBrand, getSubcategory, sellerAddProductRoute, sellerGetCategories } from '../../../api/routes';
+import { getBrand, getSubcategory, sellerGetCategories } from '../../../api/routes';
 import { Link } from 'react-router-dom';
 import { getData, postData } from '../../../hooks/useAxiosWithAuth';
+import { Chips } from 'primereact/chips';
 
 const ProductSchema = z.object({
   category_id: z.number().or(z.string()).transform(val => parseInt(val)),
   subcategory_id: z.number().or(z.string()).transform(val => parseInt(val)),
   brand_id: z.number().or(z.string()).default('1').transform(val => parseInt(val)),
   name: z.string().min(1,'Name is required'),
-  color: z.string().min(1,'Color is required'),
-  size: z.string().min(1,'Size is required'),
+  color: z.array(z.string()),
+  size: z.array(z.string()),
   price: z.number().or(z.string()).transform(val => parseInt(val)),
   keyword: z.string().min(1,'Keywords is required'),
   redirect_url: z.string().min(1,'Redirect Url is required'),
@@ -37,7 +38,6 @@ export default function ProductForm({ details, label, onSubmit }) {
   useEffect(() => {
     reset(details);
     getData(sellerGetCategories).then(data => setCategories(data.category.flat()));
-    // console.log(details);
   }, []);
   useEffect(() => {
     if (categoryId) {
@@ -93,8 +93,48 @@ export default function ProductForm({ details, label, onSubmit }) {
           </FormInputsWrapper>
 
           <FormInputsWrapper>
-            <FormInput name={'color'} register={register} errors={errors} label={'Color'} />
-            <FormInput name={'size'} register={register} errors={errors} label={'Size'} />
+            <div className='space-y-2 flex-1'>
+              <label className='block' htmlFor="">Color</label>
+              <Controller
+                name='color'
+                control={control}
+                render={({ field }) =>
+                  <Chips
+                    id={field.name}
+                    name='color'
+                    value={field?.value}
+                    className='p-1.'
+                    pt={{
+                      root: { className: 'border p-3 w-full rounded-md' },
+                      container: { className: 'w-full space-x-2' },
+                      token: { className: 'bg-[#eef2ff] py-1.5 px-2 rounded-full flex gap-1' },
+                      label: { className: 'text-xs' }
+                    }}
+                    onChange={(e) => field.onChange(e.value)}
+                  />}
+              />
+              {errors.color && <p className='text-red-700'>{errors.color.message}</p> }
+            </div>
+            <div className='space-y-2 flex-1'>
+              <label className='block' htmlFor="">Size</label>
+              <Controller
+                name='size'
+                control={control}
+                render={({ field }) =>
+                  <Chips
+                    id={field.name}
+                    name='size'
+                    value={field?.value}
+                    pt={{
+                      root: { className: 'border p-3 w-full rounded-md' },
+                      container: { className: 'w-full space-x-2' },
+                      token: { className: 'bg-[#eef2ff] py-1.5 px-2 rounded-full flex gap-1' },
+                      label: { className: 'text-xs' }
+                    }}
+                    onChange={(e) => field.onChange(e.value)} />}
+              />
+              {errors.size && <p className='text-red-700'>{errors.size.message}</p> }
+            </div>
           </FormInputsWrapper>
 
           <FormInputsWrapper>
@@ -137,8 +177,8 @@ export default function ProductForm({ details, label, onSubmit }) {
           </div>
 
           <div className='space-x-4'>
-            <button type="submit">{label === 'Add' ? 'Submit' : 'Update'}</button>
-            <button type='button' onClick={() => console.log(getValues())}>Show</button>
+            <button type="submit" className='p-3 bg-[#1E3769] text-white rounded-md'>{label === 'Add' ? 'Submit' : 'Update'}</button>
+            <button type='button' className='p-3 bg-[#1E3769] text-white rounded-md' onClick={() => console.log(getValues())}>Show</button>
           </div>
 
         </form>

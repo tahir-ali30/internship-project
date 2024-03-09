@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { sellerGetSingleProductRoute, sellerUpdateProductRoute } from '../../../api/routes';
 import { toast } from 'react-toastify';
 import ProductForm from '../components/ProductForm';
@@ -8,10 +8,12 @@ import { postData } from '../../../hooks/useAxiosWithAuth';
 export default function EditProduct() {
     const { productId } = useParams();
     const [details, setDetails] = useState();
+    const navigate = useNavigate();
 
     async function onSubmit(data) {
         console.log(data);
         const message = await postData(sellerUpdateProductRoute, data);
+        navigate('/dashboard/seller/products');
     }
 
     useEffect(() => {
