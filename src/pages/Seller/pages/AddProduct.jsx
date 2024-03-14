@@ -1,6 +1,6 @@
 import React from 'react'
 import ProductForm from '../components/ProductForm'
-import { postData } from '../../../hooks/useAxiosWithAuth';
+import { postData } from '../../../lib/useAxiosWithAuth';
 import { sellerAddProductRoute } from '../../../api/routes';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,7 +14,7 @@ export default function AddProduct() {
 
   return (
     <div>
-      <ProductForm label={'Add'} onSubmit={onSubmit} />
+      <ProductForm label={'Add Product'} onSubmit={onSubmit} />
     </div>
   )
 }

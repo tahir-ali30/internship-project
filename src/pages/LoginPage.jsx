@@ -14,11 +14,9 @@ import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import loginSchema from '../FormSchemas/loginSchema';
-import userAuthFetch from '../lib/userAuthFetch';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { setUserData } from '../app/states/user/userSlice';
 import { toast } from "react-toastify";
 import axios from 'axios';
@@ -29,11 +27,16 @@ const defaultTheme = createTheme();
 export default function Login() {
   const navigator = useNavigate();
   const dispatch = useDispatch();
+  const token = useSelector(state => state.user.token);
+
+  React.useEffect(()=>{
+    if (token) navigator('/dashboard/seller/home', { replace: true });
+  }, [navigator, token]);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-    setError,
   } = useForm({
     resolver: zodResolver(loginSchema),
   });

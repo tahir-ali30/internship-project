@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import axios from 'axios';
 import React, { useEffect, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form';
 import ReactQuill from 'react-quill';
@@ -7,8 +6,11 @@ import { z } from 'zod'
 import 'react-quill/dist/quill.snow.css';
 import { getBrand, getSubcategory, sellerGetCategories } from '../../../api/routes';
 import { Link } from 'react-router-dom';
-import { getData, postData } from '../../../hooks/useAxiosWithAuth';
 import { Chips } from 'primereact/chips';
+import { FormInput, FormInputsWrapper, FormSelectInput } from './FormComponents';
+import useFetchCategories from '../../../hooks/useFetchCategories';
+import useFetchSubCategories from '../../../hooks/useFetchSubCategories';
+import useFetchBrands from '../../../hooks/useFetchBrands';
 
 const ProductSchema = z.object({
   category_id: z.number().or(z.string()).transform(val => parseInt(val)),
@@ -26,9 +28,10 @@ const ProductSchema = z.object({
 }).passthrough();
 
 export default function ProductForm({ details, label, onSubmit }) {
-  const [categories, setCategories] = useState([]);
-  const [subCategories, setSubCategories] = useState([]);
-  const [brands, setBrands] = useState([]);
+  const { categories } = useFetchCategories(sellerGetCategories);
+  const { subCategories, fetchSubCategories } = useFetchSubCategories();
+  const { brands, fetchBrands } = useFetchBrands();
+
   const { register, handleSubmit, watch, control, reset, getValues, formState: { errors } } = useForm({
     resolver: zodResolver(ProductSchema)
   });
@@ -36,20 +39,19 @@ export default function ProductForm({ details, label, onSubmit }) {
   const [categoryId] = watch(['category_id']);
 
   useEffect(() => {
-    reset(details);
-    getData(sellerGetCategories).then(data => setCategories(data.category.flat()));
-  }, []);
-  useEffect(() => {
+    if (!categoryId) {
+      reset(details);
+    }
     if (categoryId) {
-      postData(getSubcategory, { category_id: categoryId }).then(data => setSubCategories(data.subcategory));
-      postData(getBrand, { category_id: categoryId }).then(data => setBrands(data.brand));
+      fetchSubCategories(categoryId);
+      fetchBrands(categoryId);
     }
   }, [categoryId])
 
   return (
     <main className='bg-white rounded-md'>
       <div className='flex justify-between items-center border-b pb-5 p-4'>
-        <h1>{label} Product</h1>
+        <h1>{label}</h1>
         <Link to={'/dashboard/seller/products'} className='py-2 px-3 bg-[#1E3769] text-white rounded-md'>
         <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--lucide" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m12 19l-7-7l7-7m7 7H5"></path></svg>
         </Link>
@@ -187,49 +189,3 @@ export default function ProductForm({ details, label, onSubmit }) {
   )
 }
 
-function FormInput({ type = 'text', name, register, errors, placeHolder = '', label }) {
-  return (
-    <div className='space-y-2 flex-1'>
-      <label className='block' htmlFor="">{label}</label>
-      <input
-        {...register(name)}
-        type={type}
-        name={name}
-        id={name}
-        placeholder={placeHolder}
-        className='border p-3 w-full rounded-md'
-      />
-      {errors[name] && <p className='text-red-600'>{errors[name].message}</p> }
-    </div>
-  )
-}
-
-function FormSelectInput({ name, data, register, errors, placeHolder, label, control }) {
-  return (
-    <div className='space-y-2 flex-1'>
-      <label className='block' htmlFor="">{label}</label>
-      <Controller name={name} control={control} render={({field}) => (
-        <select
-          {...field}
-          className='p-3 bg-transparent border w-full rounded-md disabled:cursor-not-allowed disabled:bg-[#FAFBFD]'
-          disabled={data?.length === 0}
-        >
-
-          <option>{placeHolder}</option>
-          {data?.length > 0 && data.map(item => (
-            <option key={item[name]} value={item[name]}>{item.name}</option>
-          ))}
-        </select>
-      )} />
-      {errors[name] && <p className='text-red-600'>{errors[name].message}</p>}
-    </div>
-  )
-}
-
-function FormInputsWrapper({ children }) {
-  return (
-    <div className='flex items-center gap-3'>
-      {children}
-    </div>
-  )
-}

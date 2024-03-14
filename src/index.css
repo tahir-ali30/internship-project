@@ -38,14 +38,6 @@ img {
     @apply bg-[#1E3769] text-white;
 }
 
-.formInput{
-    @apply border-2 w-full p-2 rounded-lg my-2;
-}
-
-.formInputsContainer {
-    @apply flex gap-2;
-}
-
 .seller-nav-links {
     @apply p-3 pr-16 rounded-md max-w-full flex items-center gap-2 justify-start;
 }

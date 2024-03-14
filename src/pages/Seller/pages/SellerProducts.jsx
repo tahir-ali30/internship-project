@@ -1,11 +1,9 @@
-import { flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
-import axios from 'axios';
 import { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux'
-import { toast } from 'react-toastify';
 import { sellerGetAllProductsRoute } from '../../../api/routes';
 import { Link } from 'react-router-dom';
-import { getData } from '../../../hooks/useAxiosWithAuth';
+import { getData } from '../../../lib/useAxiosWithAuth';
+import Loading from '../../../components/Loading';
+import Table from '../../../components/Table';
 
 export default function SellerProducts() {
     const cols = [
@@ -50,26 +48,7 @@ export default function SellerProducts() {
             )
         },
     ]
-    const [product, setProduct] = useState([]);
-    const [sorting, setSorting] = useState([]);
-
-    useEffect(() => {
-        toast.promise(getData(sellerGetAllProductsRoute).then(data => setProduct(data.product)), {
-            pending: 'Loading Products',
-            success: 'Prodcuts Loaded'
-        })
-    }, []);
-
-    const table = useReactTable({
-        data: product,
-        columns: cols,
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        state: {
-            sorting: sorting,
-        },
-        onSortingChange: setSorting,
-    });
+    const { product, isLoading } = useProducts();
 
     return (
         <main className='bg-white rounded-md mx-10 mt-20'>
@@ -78,40 +57,24 @@ export default function SellerProducts() {
                 <Link to={'/dashboard/seller/products/add'} className='py-2 px-3 bg-[#1E3769] text-white rounded-md'>Add</Link>
             </div>
 
-            <div >
-                <table className='w-full'>
-                    <thead>
-                        {table.getHeaderGroups().map(headerGroup => (
-                            <tr key={headerGroup.id}>
-                                {headerGroup.headers.map(header => (
-                                    <th key={header.id}
-                                        onClick={header.column.getToggleSortingHandler()}
-                                        className='p-4 text-start cursor-pointer'>
-                                        {header.isPlaceholder ?
-                                            null
-                                            :
-                                            flexRender(header.column.columnDef.header, header.getContext())}
-                                        {
-                                            {asc: ' ⬆', desc: ' ⬇'}[header.column.getIsSorted(true) ?? null]
-                                        }
-                                    </th>
-                                ))}
-                            </tr>
-                        ))}
-                    </thead>
-                    <tbody>
-                        {table.getRowModel().rows.map(row => (
-                            <tr key={row.id}>
-                                {row.getVisibleCells().map(cell => (
-                                    <td key={cell.id} className='p-4 text-start'>
-                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                    </td>
-                                ))}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+            {isLoading ? <Loading /> :
+                <div>
+                    <Table data={product} cols={cols} />
+                </div>
+            }
         </main>
-  )
+    )
+}
+
+function useProducts() {
+    const [product, setProduct] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        getData(sellerGetAllProductsRoute).then(data => {
+            setProduct(data.product)
+            setIsLoading(false);
+        })
+    }, []);
+    return { product, isLoading };
 }

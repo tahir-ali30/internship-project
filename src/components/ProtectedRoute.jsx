@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router-dom'
 
 export default function ProtectedRoute({ children }) {
     const navigate = useNavigate();
-    const user = (useSelector(state => state.user.userData) || localStorage.getItem('auth')?.user) ?? null;
+    const token = (useSelector(state => state.user.token) || localStorage.getItem('auth')?.token) ?? null;
 
     useEffect(() => {
-        if (user === null) {
+        if (token === null) {
             navigate('/login', { replace: true });
         }
-    }, [navigate, user]);
+    }, [navigate, token]);
 
     return (
         children

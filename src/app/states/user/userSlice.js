@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit"
 
 const initialState = {
+    token: JSON.parse(localStorage.getItem('auth'))?.token || null,
     userData: JSON.parse(localStorage.getItem('auth'))?.user || null,
 }
 
@@ -12,9 +13,11 @@ const userSlice = createSlice({
             const { token, account } = action.payload;
             const user = account[0];
             state.userData = user;
+            state.token = token;
             localStorage.setItem('auth', JSON.stringify({ token, user }));
         },
         removeUserData: state => {
+            state.token = null;
             state.userData = null;
             localStorage.removeItem('auth');
         },

@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-toastify';
 import { z } from "zod";
 import axios from 'axios';
 import { isStrongPassword } from 'validator';
-import { getCityRoute, getCountryRoute, getStateRoute, sellerSignupRoute } from '../../../api/routes';
-import { getData, postData } from '../../../hooks/useAxios';
+import { sellerSignupRoute } from '../../../api/routes';
+import useCountries from '../../../hooks/useCountries';
+import { FormInputsWrapper,FormInput, FormSelectInput } from './FormComponents';
 
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
@@ -46,9 +47,6 @@ const CNICSchema = z.object({
 });
 
 export default function SellerForm() {
-  const [countries, setCountries] = useState([]);
-  const [cities, setCities] = useState([]);
-  const [states, setStates] = useState([]);
   const [step, setStep] = useState(1);
   const titles = ['Personal', 'Bank', 'Shop', 'CNIC'];
 
@@ -80,37 +78,26 @@ export default function SellerForm() {
           }
       )
   }
-  const { register, handleSubmit, watch, formState: { errors, isValid, isSubmitting } } = useForm({ resolver: zodResolver(currentSchema) });
+  const {
+    register,
+    handleSubmit,
+    watch,
+    control,
+    formState: { errors, isValid, isSubmitting } } = useForm({ resolver: zodResolver(currentSchema) });
   const [countryId, stateId, frontImg, backImg] = watch(['country_id', 'state_id', 'front', 'back']);
 
-  useEffect(() => {
-    getData(getCountryRoute).then(data => setCountries(data.country));
-  }, [])
+  const { countries, states, cities } = useCountries(countryId, stateId);
 
-  useEffect(() => {
-    if (countryId) {
-      postData(getStateRoute, { country_id: countryId }).then(data => setStates(data.state));
-    }
-  }, [countryId])
-
-  useEffect(() => {
-    if (stateId) {
-      postData(getCityRoute, { state_id: stateId }).then(data => setCities(data.city));
-    }
-  }, [stateId])
-
-  function nextStep(data) {
+  function nextStep() {
     if (step === 4) return;
     if (isValid) {
       setStep(prev => prev + 1);
-    } else {
-        throw new Error('unknown error');
-      }
+    }
   }
 
   async function onSubmit(data) {
     try {
-      const { error, message, ...response } = await axios.post(sellerSignupRoute, data,
+      const { error, message } = await axios.post(sellerSignupRoute, data,
         { headers: { 'Content-Type': 'multipart/form-data' } });
       if (!error) {
         toast.success(message)
@@ -136,161 +123,90 @@ export default function SellerForm() {
       <div className='grow w-full border-2 bg-slate-50 pb-10'>
         <h1 className='font-bold text-3xl text-center my-5'>{titles[step - 1]}</h1>
 
-        <form className='px-5 grid gap-y-5' onSubmit={handleSubmit(onSubmit)}>
+        <form className='px-5' onSubmit={handleSubmit(onSubmit)}>
 
           {/* 1st step form Personal */}
-          {step === 1 && <div>
+          {step === 1 && <div className=''>
 
-            <div className='formInputsContainer'>
-              <div className='flex-1'>
-                <label className='block'>First Name</label>
-                <FormInput name={'first_name'} placeHolder={'Enter Your First Name'} register={register} errors={errors} />
-                <label className='block'>Last Name</label>
-                <FormInput name={'last_name'} placeHolder={'Enter Your Last Name'} register={register} errors={errors} />
-              </div>
-            </div>
+            <FormInputsWrapper>
+              <FormInput name={'first_name'} placeHolder={'Enter Your First Name'} register={register} errors={errors} label={'First Name'} />
+              <FormInput name={'last_name'} placeHolder={'Enter Your Last Name'} register={register} errors={errors} label={'Last Name'} />
+            </FormInputsWrapper>
 
-            <div className='formInputsContainer'>
-              <div className='flex-1'>
-                <label className='block'>Email</label>
-                <FormInput type='email' name={'email'} placeHolder={'Enter Your Email'} register={register} errors={errors} />
-              </div>
-              <div className='flex-1'>
-                <label className='block'>Phone</label>
-                <FormInput type='number' name={'phone'} placeHolder={'Enter Your Phone (Optional)'} register={register} errors={errors} />
-              </div>
-            </div>
+            <FormInputsWrapper>
+              <FormInput type='email' name={'email'} placeHolder={'Enter Your Email'} register={register} errors={errors} label={'Email'} />
+              <FormInput type='number' name={'phone'} placeHolder={'Enter Your Phone (Optional)'} register={register} errors={errors} label={'Phone'} />
+            </FormInputsWrapper>
 
-            <div>
-              <label className='block'>Country</label>
-              <select
-                {...register('country_id')}
-                className='w-full p-2 my-3' name="country_id" id="country_id">
+            <FormSelectInput name={'country_id'} control={control} errors={errors} label={'Country'} data={countries} placeHolder={'Select Option'} />
 
-                <option value={''}>Select Option</option>
-                {countries?.length > 0 && countries.map(country =>
-                  <option key={country.country_id} value={country.country_id}>{country.name}</option>
-                )}
+            <FormInputsWrapper>
+              <FormSelectInput name={'state_id'} control={control} errors={errors} label={'State'} data={states} placeHolder={'Select Option'} />
+              <FormSelectInput name={'city_id'} control={control} errors={errors} label={'City'} data={cities} placeHolder={'Select Option'} />
+            </FormInputsWrapper>
 
-              </select>
-                {errors.country_id && <p className='-mt-2 text-red-700'>{errors.country_id.message}</p>}
-            </div>
+            <FormInput name={'address'} placeHolder={'Enter Your Address'} register={register} errors={errors} label={'Address'} />
+            
+            <FormInput type='number' name={'nic'} placeHolder={'Enter Your Cnic Number'} register={register} errors={errors} label={'National Identification Number'} />
 
-            <div className='formInputsContainer'>
-
-              <div className='flex-1'>
-                <label className='block'>State</label>
-                <select
-                  {...register('state_id')}
-                  className='w-full p-2 my-3 disabled:cursor-not-allowed' name="state_id" id="state_id"
-                  disabled={states?.length === 0}
-                >
-                  <option value={''}>Select Option</option>
-                  {states?.length > 0 && states.map(state =>
-                    <option key={state.state_id} value={state.state_id}>{state.name}</option>
-                )}
-
-                </select>
-                {errors.state_id && <p className='-mt-2 text-red-700'>{errors.state_id.message}</p>}
-              </div>
-
-              <div className='flex-1'>
-                <label className='block'>City</label>
-                <select
-                  {...register('city_id')}
-                  className='w-full p-2 my-3 disabled:cursor-not-allowed' name="city_id" id="city_id"
-                  disabled={(cities?.length === 0)}
-                >
-
-                  <option value={''}>Select Option</option>
-                  {cities?.length > 0 && cities.map(city =>
-                   <option key={city.city_id} value={city.city_id}>{city.name}</option>
-                )}
-
-                </select>
-                {errors.city_id && <p className='-mt-2 text-red-700'>{errors.city_id.message}</p>}
-              </div>
-
-            </div>
-
-            <div>
-              <label className='block'>Address</label>
-                <FormInput name={'address'} placeHolder={'Enter Your Address'} register={register} errors={errors} />
-            </div>
-
-            <div>
-              <label className='block'>National Identification Number</label>
-                <FormInput type='number' name={'nic'} placeHolder={'Enter Your Cnic Number'} register={register} errors={errors} />
-            </div>
-
-            <div className='formInputsContainer'>
-              <div className='flex-1'>
-                <label className='block'>Password</label>
-                <FormInput type='password' name={'password'} placeHolder={'Enter Your Password'} register={register} errors={errors} />
-              </div>
-              <div className='flex-1'>
-                <label className='block'>Confirm Password</label>
-                <FormInput type='password' name={'confirm_password'} placeHolder={'Confirm Your Password'} register={register} errors={errors} />
-              </div>
-            </div>
+            <FormInputsWrapper>
+              <FormInput type='password' name={'password'} placeHolder={'Enter Your Password'} register={register} errors={errors} label={'Password'} />
+              <FormInput type='password' name={'confirm_password'} placeHolder={'Confirm Your Password'} register={register} errors={errors} label={'Confirm Password'} />
+            </FormInputsWrapper>
 
           </div>}
 
           {/* 2nd step form Bank */}
           {step === 2 && <div>
-            <div>
-              <label className='block'>Bank</label>
-              <select
-                {...register('bank_id')}
-                className='w-full p-2 my-3' name="bank_id" id="bank_id">
-                <option value=''>Select Option</option>
-                <option value="1">Meezan</option>
-              </select>
-                {errors.bank_id && <p className='-mt-2 text-red-700'>{errors.bank_id.message}</p>}
-            </div>
-            <div>
-              <label className='block'>Account IBAN Number (24 Characters)</label>
-                <FormInput name={'iban'} placeHolder={'Enter Your IBAN Number'} register={register} errors={errors} />
-            </div>
-            <div>
-              <label className='block'>Account Title</label>
-                <FormInput name={'title'} placeHolder={'Confirm Your Account Title'} register={register} errors={errors} />
-            </div>
+
+            <FormSelectInput
+              label={'Bank'}
+              control={control}
+              errors={errors}
+              name={'bank_id'}
+              placeHolder={'Selec Option'}
+              data={[{ bank_id: 1, name: 'Meezan' }]} />
+
+            <FormInput
+              name={'iban'}
+              placeHolder={'Enter Your IBAN Number'}
+              register={register} errors={errors} label={'Account IBAN Number (24 Characters)'} />
+
+            <FormInput name={'title'}
+              placeHolder={'Confirm Your Account Title'}
+              register={register} errors={errors} label={'Account Title'} />
+
           </div>}
 
           {/* 3rd step form Shop */}
           {step === 3 && <div>
-            <div>
-              <label htmlFor="">Shop Name</label>
-                <FormInput name={'shop_name'} placeHolder={'Enter Your Shop Name'} register={register} errors={errors} />
-            </div>
 
-            <div className='formInputsContainer'>
-              <div>
-                <label htmlFor="">Bussiness Email</label>
-                <FormInput type='email' name={'shop_email'} placeHolder={'Enter Your Business Email'} register={register} errors={errors} />
-              </div>
-              <div>
-                <label htmlFor="">Bussiness Phone #</label>
-                <FormInput type='number' name={'shop_phone'} placeHolder={'Enter Your Business Phone #'} register={register} errors={errors} />
-              </div>
-            </div>
+            <FormInput name={'shop_name'} placeHolder={'Enter Your Shop Name'} register={register} errors={errors} label={'Shop Name'} />
 
-            <div>
-              <label htmlFor="">Bussiness Address</label>
-              <FormInput name={'shop_address'} placeHolder={'Enter Your Business Address'} register={register} errors={errors} />
-            </div>
+            <FormInputsWrapper>
+              <FormInput
+                type='email' name={'shop_email'}
+                placeHolder={'Enter Your Business Email'}
+                register={register}
+                errors={errors}
+                label={'Business Email'} />
+              <FormInput type='number' name={'shop_phone'}
+                placeHolder={'Enter Your Business Phone #'}
+                register={register}
+                errors={errors}
+                label={'Business Phone'} />
+            </FormInputsWrapper>
 
-            <div className='formInputsContainer'>
-              <div>
-                <label htmlFor="">National Tax Number</label>
-                <FormInput type='number' name={'ntn'} placeHolder={'Confirm Your NTN Number'} register={register} errors={errors} />
-              </div>
-              <div>
-                <label htmlFor="">Sales Tax Number</label>
-                <FormInput type='number' name={'stn'} placeHolder={'Confirm Your STN Number'} register={register} errors={errors} />
-              </div>
-            </div>
+            <FormInput name={'shop_address'}
+              placeHolder={'Enter Your Business Address'}
+              register={register}
+              errors={errors}
+              label={'Business Address'} />
+
+            <FormInputsWrapper>
+              <FormInput type='number' name={'ntn'} placeHolder={'Confirm Your NTN Number'} register={register} errors={errors} label={'National Tax Number'} />
+              <FormInput type='number' name={'stn'} placeHolder={'Confirm Your STN Number'} register={register} errors={errors} label={'Sales Tax Number'} />
+            </FormInputsWrapper>
 
           </div>}
 
@@ -322,6 +238,7 @@ export default function SellerForm() {
                 type='button'
                 disabled = { step === 1 }
                 className='bg-[#1E3769] px-6 py-3 rounded-md text-white disabled:bg-gray-400 disabled:cursor-not-allowed'>Prev</button>
+
               {step !== 4 &&
                 <button
                   onClick={
@@ -330,6 +247,7 @@ export default function SellerForm() {
                   type='button'
                   className='bg-[#1E3769] px-6 py-3 rounded-md text-white'>Next</button>
               }
+
               {step === 4 &&
                 <button
                   type='submit'
@@ -342,17 +260,5 @@ export default function SellerForm() {
         </form>
       </div>
     </section>
-  )
-}
-
-function FormInput({ type = 'text', name, placeHolder, register, errors }) {
-  return (
-    <>
-      <input
-        {...register(name)}
-        className='formInput'
-        type={type} name={name} id={name} placeholder={placeHolder} />
-      {errors[name] && <p className='-mt-2 text-red-700'>{errors[name].message}</p>}
-    </>
   )
 }
