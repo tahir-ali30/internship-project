@@ -1,6 +1,6 @@
 // export const url = 'http://192.168.0.118:3000/api/web/';
-// export const url = 'http://192.168.0.110:1000/api/web/';
-export const url = 'https://vshop-apis.elliptical.website/api/web/';
+export const url = 'http://192.168.0.110:1000/api/web/';
+// export const url = 'https://vshop-apis.elliptical.website/api/web/';
 
 export const getCountryRoute = url + 'country';
 export const getStateRoute = url + 'state';
